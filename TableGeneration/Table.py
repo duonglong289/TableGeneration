@@ -96,11 +96,75 @@ class Table:
                     'td': 'border-right:1px solid black;',
                     'th': 'border-right:1px solid black;'
                 }
-            }  # 绘制右竖线
+            },  # 绘制右竖线
+            8: {
+                'name': 'border_dotted',
+                'style': {
+                    'td': 'border-style: dotted;',
+                    'th': 'border-style: dotted;'
+                }
+            },
+            9: {
+                'name': 'border_dashed',
+                'style': {
+                    'td': 'border-style: dashed;',
+                    'th': 'border-style: dashed;'
+                }
+            },
+            10: {
+                'name': 'border_fat',
+                'style': {
+                    'table': f'border:{random.randint(2,5)}px solid black;',
+                    'td': f'border:{random.randint(2,5)}px solid black;',
+                    'th': f'border:{random.randint(2,5)}px solid black;'
+                }
+            },
+            11: {
+                'name': 'border_ridge',
+                'style': {
+                    # 'table': f'border:{random.randint(2,5)}px solid black;',
+                    'td': f'border: ridge;',
+                    'th': f'border: ridge;'
+                }
+            },
+            12: {
+                'name': 'border_groove',
+                'style': {
+                    # 'table': f'border:{random.randint(2,5)}px solid black;',
+                    'td': f'border: groove;',
+                    'th': f'border: groove;'
+                }
+            },
+            13: {
+                'name': 'border_inset',
+                'style': {
+                    # 'table': f'border:{random.randint(2,5)}px solid black;',
+                    'td': f'border: inset;',
+                    'th': f'border: inset;'
+                }
+            },
+            14: {
+                'name': 'border_outset',
+                'style': {
+                    # 'table': f'border:{random.randint(2,5)}px solid black;',
+                    'td': f'border: outset;',
+                    'th': f'border: outset;'
+                }
+            },
+            15: {
+                'name': 'border_double',
+                'style': {
+                    # 'table': f'border:{random.randint(2,5)}px solid black;',
+                    'td': f'border: double;',
+                    'th': f'border: double;'
+                }
+            },
         }
 
         # 随机选择一种
-        self.border_type = random.choice(list(self.pre_boder_style.keys()))
+        # self.border_type = random.choice(list(self.pre_boder_style.keys()))
+        self.border_type = random.choice([1, 9, 10, 11, 12, 13, 14])
+        # self.border_type = 15
 
         self.spanflag = False
         '''cell_types matrix have two possible values:
@@ -142,17 +206,17 @@ class Table:
         '''
 
         prob_words = 0.3
-        prob_numbers = 0.5
-        prob_ens = 0.1
+        prob_numbers = 0.45
+        prob_ens = 0.45
         prob_money = 0.1
         for i, type in enumerate(
                 random.choices(
-                    ['n', 'm', 'c', 'e'],
-                    weights=[prob_numbers, prob_money, prob_words, prob_ens],
+                    ['n', 'm', 'e'],
+                    weights=[prob_numbers, prob_money, prob_ens],
                     k=self.no_of_cols)):
             self.cell_types[:, i] = type
         '''The headers should be of type word'''
-        self.cell_types[0:2, :] = 'c'
+        self.cell_types[0:2, :] = 'e'
         '''All cells should have simple text but the headers'''
         self.headers[:] = 's'
         self.headers[0:2, :] = 'h'
@@ -377,7 +441,7 @@ class Table:
                         structure.append('<td>')
                 if c == 0:
                     # 第一行设置为中英文
-                    text_type = random.choice(['c', 'e'])
+                    text_type = random.choice(['e'])
                 txt = self.generate_random_text(text_type)
                 if self.cell_box_type == 'text':
                     txt = '<span id=' + str(idcounter) + '>' + txt + ' </span>'
