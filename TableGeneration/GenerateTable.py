@@ -68,50 +68,68 @@ class GenerateTable:
 
     def gen_table_img(self, img_count):
         os.makedirs(self.output, exist_ok=True)
-        f_gt = open(
-            os.path.join(self.output, 'gt.txt'), encoding='utf-8', mode='w')
-        for i in tqdm(range(img_count)):
-            # data_arr contains the images of generated tables and all_table_categories contains the table category of each of the table
-            out = self.generate_table()
-            if out is None:
-                continue
+        with open(os.path.join(self.output, 'gt.txt'), encoding='utf-8', mode='w') as f_gt:
+            for i in tqdm(range(img_count)):
+                # data_arr contains the images of generated tables and all_table_categories contains the table category of each of the table
+                out = self.generate_table()
+                if out is None:
+                    continue
 
-            im, html_content, structure, contens, border = out
-            im, contens = self.clip_white(im, contens)
+                im, html_content, structure, contens, border = out
+                im, contens = self.clip_white(im, contens)
 
-            # randomly select a name of length=20 for file.
-            output_file_name = ''.join(
-                random.choices(
-                    string.ascii_uppercase + string.digits, k=20))
-            output_file_name = '{}_{}_{}'.format(border, i, output_file_name)
-            # print('{}/{}, {}'.format(i, img_count, output_file_name))
+                output_file_name = f'{border}_{i}_{output_file_name}'
 
-            # if the image and equivalent html is need to be stored
-            os.makedirs(os.path.join(self.output, 'html'), exist_ok=True)
-            os.makedirs(os.path.join(self.output, 'img'), exist_ok=True)
+                # if the image and equivalent html is need to be stored
+                os.makedirs(os.path.join(self.output, 'html'), exist_ok=True)
+                os.makedirs(os.path.join(self.output, 'img'), exist_ok=True)
 
-            html_save_path = os.path.join(self.output, 'html',
-                                          output_file_name + '.html')
-            img_save_path = os.path.join(self.output, 'img',
-                                         output_file_name + '.jpg')
-            with open(html_save_path, encoding='utf-8', mode='w') as f:
-                f.write(html_content)
-            im.save(img_save_path, dpi=(600, 600))
+                html_save_path = os.path.join(self.output, 'html', f'{output_file_name}.html')
+                img_save_path = os.path.join(self.output, 'img', f'{output_file_name}.jpg')
+                with open(html_save_path, encoding='utf-8', mode='w') as f:
+                    f.write(html_content)
+                im.save(img_save_path, dpi=(300, 300))
 
-            # 构造标注信息
-            img_file_name = os.path.join('img', output_file_name + '.jpg')
-            label_info = self.make_ppstructure_label(structure, contens,
-                                                     img_file_name)
+                img_file_name = os.path.join('img', f'{output_file_name}.jpg')
+                label_info = self.make_ppstructure_label(structure, contens,
+                                                         img_file_name)
 
-            f_gt.write('{}\n'.format(
-                json.dumps(
-                    label_info, ensure_ascii=False)))
-        # convert to PP-Structure label format
-        f_gt.close()
+                f_gt.write('{}\n'.format(
+                    json.dumps(
+                        label_info, ensure_ascii=False)))
+
         self.close()
 
+    def gen_table_img_single(self, index: int):
+        out = self.generate_table()
+        if out is None:
+            return
+
+        im, html_content, structure, contens, border = out
+        im, contens = self.clip_white(im, contens)
+
+        output_file_name = f'{border}_{index}'
+
+        # if the image and equivalent html is need to be stored
+        os.makedirs(os.path.join(self.output, 'html'), exist_ok=True)
+        os.makedirs(os.path.join(self.output, 'img'), exist_ok=True)
+
+        html_save_path = os.path.join(self.output, 'html', f'{output_file_name}.html')
+        img_save_path = os.path.join(self.output, 'img', f'{output_file_name}.jpg')
+        with open(html_save_path, encoding='utf-8', mode='w') as f:
+            f.write(html_content)
+        im.save(img_save_path, dpi=(300, 300))
+
+        img_file_name = os.path.join('img', f'{output_file_name}.jpg')
+        label_info = self.make_ppstructure_label(structure, contens, img_file_name)
+        output_label_dir = os.path.join(self.output, 'json')
+        os.makedirs(output_label_dir, exist_ok=True)
+        output_label_path = os.path.join(output_label_dir, f"{border}_{index}.json")
+
+        with open(output_label_path, "w") as f:
+            json.dump(label_info, f, ensure_ascii=False, indent=4)
+
     def generate_table(self):
-        # 随机生成行列长度
         cols = random.randint(self.min_col, self.max_col)
         rows = random.randint(self.min_row, self.max_row)
         try:
@@ -133,11 +151,10 @@ class GenerateTable:
         except KeyboardInterrupt:
             import sys
             sys.exit()
-        except:
+        except Exception:
             import traceback
             traceback.print_exc()
             return None
-        return None
 
     def make_ppstructure_label(self, structure, bboxes, img_path):
         d = {
@@ -148,10 +165,7 @@ class GenerateTable:
                 }
             }
         }
-        cells = []
-        for bbox in bboxes:
-            text = bbox[1]
-            cells.append({'tokens': list(text), 'bbox': bbox[2:]})
+        cells = [{'tokens': list(bbox[1]), 'bbox': bbox[2:]} for bbox in bboxes]
         d['html']['cells'] = cells
         d['gt'] = self.rebuild_html_from_ppstructure_label(d)
         return d
@@ -171,9 +185,7 @@ class GenerateTable:
                 cell = ''.join(cell)
                 html_code.insert(i + 1, cell)
         html_code = ''.join(html_code)
-        html_code = '<html><body><table>{}</table></body></html>'.format(
-            html_code)
-        return html_code
+        return f'<html><body><table>{html_code}</table></body></html>'
 
     def clip_white(self, im, bboxes):
         w, h = im.size
@@ -183,10 +195,21 @@ class GenerateTable:
         xmax = bbox[:, :, 0].max()
         ymax = bbox[:, :, 1].max()
 
-        xmin = max(0, xmin - random.randint(0, 10))
-        ymin = max(0, ymin - random.randint(0, 10))
-        xmax = min(w, xmax + random.randint(2, 10))
-        ymax = min(h, ymax + random.randint(2, 10))
+        # xmin = max(0, xmin - random.randint(0, 10))
+        # ymin = max(0, ymin - random.randint(0, 10))
+        # xmax = min(w, xmax + random.randint(2, 10))
+        # ymax = min(h, ymax + random.randint(2, 10))
+        # Crop fit bounding box:
+        if self.cell_box_type == 'cell':
+            xmin = max(0, xmin - 5)
+            ymin = max(0, ymin - 5)
+            xmax = min(w, xmax + 5)
+            ymax = min(h, ymax + 5)
+        elif self.cell_box_type == 'text':
+            xmin = max(0, xmin - 40)
+            ymin = max(0, ymin - 20)
+            xmax = min(w, xmax + 40)
+            ymax = min(h, ymax + 20)
         im = im.crop([xmin, ymin, xmax, ymax])
 
         bbox[:, :, 0] -= xmin
@@ -197,7 +220,7 @@ class GenerateTable:
 
     def html_to_img(self, html_content, id_count):
         '''converts html to image'''
-        self.driver.get("data:text/html;charset=utf-8," + html_content)
+        self.driver.get(f"data:text/html;charset=utf-8,{html_content}")
         self.driver.maximize_window()
         self.driver.set_window_size(
             width=self.brower_width,
