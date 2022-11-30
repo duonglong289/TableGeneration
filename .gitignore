@@ -18,3 +18,5 @@ driver/
 *.log
 .clang-format
 .clang_format.hook
+
+output*
