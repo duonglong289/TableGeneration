@@ -1,0 +1,18 @@
+python generate_data.py \
+    --num=100 \
+    --output='output/simple_table' \
+    --cell_box_type='cell' \
+    --min_row=3 \
+    --max_row=10 \
+    --min_col=3 \
+    --max_col=10 \
+    --max_span_row_count=5 \
+    --max_span_col_count=5 \
+    --max_span_value=4 \
+    --min_txt_len=2 \
+    --max_txt_len=40 \
+    --color_prob=0 \
+    --cell_max_width=480 \
+    --cell_max_height=0 \
+    --browser='chrome' \
+    --num_workers=0

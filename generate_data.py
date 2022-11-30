@@ -37,13 +37,13 @@ def parse_args():
     parser.add_argument('--cell_max_width', type=int, default=480, help='max width of cell')
     parser.add_argument('--cell_max_height', type=int, default=0, help='max height of cell')
     # windows size
-    parser.add_argument('--brower_width', type=int, default=4800, help='width of brower')
-    parser.add_argument('--brower_height', type=int, default=3600, help='height of brower')
-    parser.add_argument('--brower', type=str, default='chrome', help='chrome or firefox')
+    parser.add_argument('--browser_width', type=int, default=4800, help='width of browser')
+    parser.add_argument('--browser_height', type=int, default=3600, help='height of browser')
+    parser.add_argument('--browser', type=str, default='chrome', help='chrome or firefox')
     parser.add_argument('--num_workers', type=int, default=8, help='number of process worker')
 
     args = parser.parse_args()
-    if args.brower == 'chrome' and sys.platform == 'darwin':
+    if args.browser == 'chrome' and sys.platform == 'darwin':
         print('firefox is recommend for Mac OS, bug you choice is chrome')
         sys.exit(0)
     return args
@@ -51,7 +51,7 @@ def parse_args():
 
 def gen(index):
     try:
-        output = "{}_{}".format(args.output, date.today().strftime("%d%m%Y"))
+        output = f'{args.output}_{date.today().strftime("%d%m%Y")}'
         t = GenerateTable(output=output,
                         ch_dict_path=args.ch_dict_path,
                         en_dict_path=args.en_dict_path,
@@ -68,9 +68,9 @@ def gen(index):
                         color_prob=args.color_prob,
                         cell_max_width=args.cell_max_width,
                         cell_max_height=args.cell_max_height,
-                        brower=args.brower,
-                        brower_width=args.brower_width,
-                        brower_height=args.brower_height)
+                        browser=args.browser,
+                        browser_width=args.browser_width,
+                        browser_height=args.browser_height)
 
         t.gen_table_img_single(index)
         t.close()
@@ -99,9 +99,9 @@ if __name__ == '__main__':
                           color_prob=args.color_prob,
                           cell_max_width=args.cell_max_width,
                           cell_max_height=args.cell_max_height,
-                          brower=args.brower,
-                          brower_width=args.brower_width,
-                          brower_height=args.brower_height)
+                          browser=args.browser,
+                          browser_width=args.browser_width,
+                          browser_height=args.browser_height)
 
         t.gen_table_img(args.num)
         t.close()

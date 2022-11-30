@@ -8,8 +8,7 @@ def load_courp(p, join_c=''):
         for line in f.readlines():
             line = line.strip("\n").strip("\r\n")
             courp.append(line)
-    courp = join_c.join(courp)
-    return courp
+    return join_c.join(courp)
 
 
 class Table:
@@ -164,7 +163,6 @@ class Table:
         # 随机选择一种
         # self.border_type = random.choice(list(self.pre_boder_style.keys()))
         self.border_type = random.choice([1, 9, 10, 11, 12, 13, 14])
-        # self.border_type = 15
 
         self.spanflag = False
         '''cell_types matrix have two possible values:
@@ -241,7 +239,7 @@ class Table:
                 out = str(random.random() *
                           max_num)[:len(str(max_num)) + random.randint(0, 3)]
             if type == 'm':
-                out = '$' + out
+                out = f'${out}'
         elif (type == 'e'):
             txt_len = random.randint(self.min_txt_len, self.max_txt_len)
             out = self.generate_text(txt_len, self.en)
@@ -271,7 +269,7 @@ class Table:
         if (span_count >= maxvalue):
             return [], []
 
-        indices = sorted(random.sample(list(range(0, maxvalue)), span_count))
+        indices = sorted(random.sample(list(range(maxvalue)), span_count))
 
         # get span start idx and span value
         starting_index = 0
@@ -302,8 +300,8 @@ class Table:
 
         # make first row span matric
         row_span_indices = []
+        self.spanflag = True
         for index, length in zip(header_span_indices, header_span_lengths):
-            self.spanflag = True
             self.col_spans_matrix[0, index] = length
             self.col_spans_matrix[0, index + 1:index + length] = -1
             row_span_indices += list(range(index, index + length))
@@ -323,8 +321,8 @@ class Table:
             self.no_of_rows - 2, self.max_span_row_count)
         span_indices = [x + 2 for x in span_indices]
 
+        self.spanflag = True
         for index, length in zip(span_indices, span_lengths):
-            self.spanflag = True
             self.row_spans_matrix[index, colnumber] = length
             self.row_spans_matrix[index + 1:index + length, colnumber] = -1
         self.headers[:, colnumber] = 'h'
@@ -365,8 +363,8 @@ class Table:
                 random.randint(self.cell_max_height // 2,
                                self.cell_max_height))
         if self.cell_max_width != 0:
-            style += "width: {}px;".format(
-                random.randint(self.cell_max_width // 2, self.cell_max_width))
+            style += f"width: {random.randint(self.cell_max_width // 2, self.cell_max_width)}px;"
+
         # 文本换行
         style += "word-break:break-all;"
         if 'td' in boder_style:
@@ -401,42 +399,34 @@ class Table:
                 htmlcol = temparr[['s', 'h'].index(self.headers[r][c].decode(
                     'utf-8'))]
                 if self.cell_box_type == 'cell':
-                    htmlcol += ' id={}'.format(idcounter)
+                    htmlcol += f' id={idcounter}'
                 htmlcol_style = htmlcol
                 # set color
-                if (col_span_value != 0) or (r, c) not in self.missing_cells:
-                    if random.random() < self.color_prob:
-                        color = (random.randint(200, 255), random.randint(
-                            200, 255), random.randint(200, 255))
-                        htmlcol_style += ' style="background-color: rgba({}, {}, {},1);"'.format(
-                            color[0], color[1], color[2])
+                if ((col_span_value != 0) or (r, c) not in self.missing_cells) and random.random() < self.color_prob:
+                    color = (random.randint(200, 255), random.randint(200, 255), random.randint(200, 255))
+                    htmlcol_style += f' style="background-color: rgba({color[0]}, {color[1]}, {color[2]},1);"'
+
 
                 if (row_span_value == -1):
                     continue
 
                 elif (row_span_value > 0):
-                    html += '<' + htmlcol_style + ' rowspan=\"' + str(
-                        row_span_value) + '">'
+                    html += (f'<{htmlcol_style}' + ' rowspan=\"' + str(row_span_value)) + '">'
+
                     if row_span_value > 1:
-                        structure.append('<td')
-                        structure.append(' rowspan=\"{}\"'.format(
-                            row_span_value))
-                        structure.append('>')
+                        structure.extend(('<td', f' rowspan=\"{row_span_value}\"', '>'))
                     else:
                         structure.append('<td>')
                 else:
-                    if (col_span_value == 0):
+                    if col_span_value == -1:
+                        continue
+                    elif col_span_value == 0:
                         if (r, c) in self.missing_cells:
                             text_type = 't'
-                    if (col_span_value == -1):
-                        continue
-                    html += '<' + htmlcol_style + ' colspan=\"' + str(
-                        col_span_value) + '">'
+                    html += (f'<{htmlcol_style}' + ' colspan=\"' + str(col_span_value)) + '">'
+
                     if col_span_value > 1:
-                        structure.append('<td')
-                        structure.append(' colspan=\"{}\"'.format(
-                            col_span_value))
-                        structure.append('>')
+                        structure.extend(('<td', f' colspan=\"{col_span_value}\"', '>'))
                     else:
                         structure.append('<td>')
                 if c == 0:
@@ -444,9 +434,9 @@ class Table:
                     text_type = random.choice(['e'])
                 txt = self.generate_random_text(text_type)
                 if self.cell_box_type == 'text':
-                    txt = '<span id=' + str(idcounter) + '>' + txt + ' </span>'
+                    txt = f'<span id={str(idcounter)}>{txt} </span>'
                 idcounter += 1
-                html += txt + '</' + htmlcol + '>'
+                html += f'{txt}</{htmlcol}>'
                 structure.append('</td>')
 
             html += '</tr>'

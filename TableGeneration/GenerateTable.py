@@ -32,9 +32,9 @@ class GenerateTable:
                  color_prob=0,
                  cell_max_width=0,
                  cell_max_height=0,
-                 brower='chrome',
-                 brower_width=1920,
-                 brower_height=1920):
+                 browser='chrome',
+                 browser_width=1920,
+                 browser_height=1920):
         self.output = output  # wheter to store images separately or not
         self.ch_dict_path = ch_dict_path
         self.en_dict_path = en_dict_path
@@ -51,20 +51,20 @@ class GenerateTable:
         self.max_span_row_count = max_span_row_count  # max span row count
         self.max_span_col_count = max_span_col_count  # max span col count
         self.max_span_value = max_span_value  # max span value
-        self.brower = brower  # brower used to generate html table
-        self.brower_height = brower_height  # brower height
-        self.brower_width = brower_width  # brower width
+        self.browser = browser  # browser used to generate html table
+        self.browser_height = browser_height  # browser height
+        self.browser_width = browser_width  # browser width
 
-        if self.brower == 'chrome':
-            from selenium.webdriver import Chrome as Brower
+        if self.browser == 'chrome':
+            from selenium.webdriver import Chrome as Browser
             from selenium.webdriver import ChromeOptions as Options
         else:
-            from selenium.webdriver import Firefox as Brower
+            from selenium.webdriver import Firefox as Browser
             from selenium.webdriver import FirefoxOptions as Options
         opts = Options()
         opts.add_argument('--headless')
         opts.add_argument('--no-sandbox')
-        self.driver = Brower(options=opts)
+        self.driver = Browser(options=opts)
 
     def gen_table_img(self, img_count):
         os.makedirs(self.output, exist_ok=True)
@@ -223,8 +223,8 @@ class GenerateTable:
         self.driver.get(f"data:text/html;charset=utf-8,{html_content}")
         self.driver.maximize_window()
         self.driver.set_window_size(
-            width=self.brower_width,
-            height=self.brower_height,
+            width=self.browser_width,
+            height=self.browser_height,
             windowHandle="current")
         window_size = self.driver.get_window_size()
         max_height, max_width = window_size['height'], window_size['width']
