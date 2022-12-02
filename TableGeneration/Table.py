@@ -243,9 +243,9 @@ class Table:
 
     def create_border_style(self):
         if self.border_type =='full_line':
-            tab_thick = random.choices([1, 2, 3, 4], weights=[0.25, 0.35, 0.3, 0.1], k=1)[0]
-            th_thick = random.choices([1, 2, 3, 4], weights=[0.3, 0.35, 0.3, 0.05], k=1)[0]
-            td_thick = min(th_thick, random.choices([1, 2, 3, 4], weights=[0.3, 0.35, 0.3, 0.05], k=1)[0])
+            tab_thick = random.choices([1, 2, 3, 4], weights=[0.2, 0.35, 0.35, 0.1], k=1)[0]
+            th_thick = random.choices([1, 2, 3, 4], weights=[0.25, 0.35, 0.5, 0.05], k=1)[0]
+            td_thick = min(th_thick, random.choices([1, 2, 3, 4], weights=[0.25, 0.35, 0.35, 0.05], k=1)[0])
             
             r_color = random.random()
             if r_color < 0.0:
@@ -259,6 +259,7 @@ class Table:
                 # g_c = max(0, r_c + random.randint(-8, 7))
                 # b_c = max(0, r_c + random.randint(-8, 7))
                 # color = color_to_hex_html((r_c, g_c, b_c))
+
                 # Using color name instead
                 color = random.choice(gray_color_name)
                 type_lines = ['dashed', 'dotted', 'double', 'solid']
