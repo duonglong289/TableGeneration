@@ -34,7 +34,8 @@ class GenerateTable:
                  cell_max_height=0,
                  browser='chrome',
                  browser_width=1920,
-                 browser_height=1920):
+                 browser_height=1920,
+                 border_type='full'):
         self.output = output  # wheter to store images separately or not
         self.ch_dict_path = ch_dict_path
         self.en_dict_path = en_dict_path
@@ -54,6 +55,7 @@ class GenerateTable:
         self.browser = browser  # browser used to generate html table
         self.browser_height = browser_height  # browser height
         self.browser_width = browser_width  # browser width
+        self.border_type = border_type
 
         if self.browser == 'chrome':
             from selenium.webdriver import Chrome as Browser
@@ -68,35 +70,37 @@ class GenerateTable:
 
     def gen_table_img(self, img_count):
         os.makedirs(self.output, exist_ok=True)
-        with open(os.path.join(self.output, 'gt.txt'), encoding='utf-8', mode='w') as f_gt:
-            for i in tqdm(range(img_count)):
-                # data_arr contains the images of generated tables and all_table_categories contains the table category of each of the table
-                out = self.generate_table()
-                if out is None:
-                    continue
+        
+        for index in tqdm(range(img_count)):
+            # data_arr contains the images of generated tables and all_table_categories contains the table category of each of the table
+            out = self.generate_table()
+            if out is None:
+                continue
 
-                im, html_content, structure, contens, border = out
-                im, contens = self.clip_white(im, contens)
+            im, html_content, structure, contens, border = out
+            im, contens = self.clip_white(im, contens)
 
-                output_file_name = f'{border}_{i}_{output_file_name}'
+            output_file_name = f'{border}_{index}'
 
-                # if the image and equivalent html is need to be stored
-                os.makedirs(os.path.join(self.output, 'html'), exist_ok=True)
-                os.makedirs(os.path.join(self.output, 'img'), exist_ok=True)
+            # if the image and equivalent html is need to be stored
+            os.makedirs(os.path.join(self.output, 'html'), exist_ok=True)
+            os.makedirs(os.path.join(self.output, 'img'), exist_ok=True)
 
-                html_save_path = os.path.join(self.output, 'html', f'{output_file_name}.html')
-                img_save_path = os.path.join(self.output, 'img', f'{output_file_name}.jpg')
-                with open(html_save_path, encoding='utf-8', mode='w') as f:
-                    f.write(html_content)
-                im.save(img_save_path, dpi=(300, 300))
+            html_save_path = os.path.join(self.output, 'html', f'{output_file_name}.html')
+            img_save_path = os.path.join(self.output, 'img', f'{output_file_name}.jpg')
+            # with open(html_save_path, encoding='utf-8', mode='w') as f:
+            #     f.write(html_content)
+            im.save(img_save_path, dpi=(300, 300), quality=95)
 
-                img_file_name = os.path.join('img', f'{output_file_name}.jpg')
-                label_info = self.make_ppstructure_label(structure, contens,
-                                                         img_file_name)
+            img_file_name = os.path.join('img', f'{output_file_name}.jpg')
+            label_info = self.make_ppstructure_label(structure, contens,
+                                                        img_file_name)
+            output_label_dir = os.path.join(self.output, 'json')
+            os.makedirs(output_label_dir, exist_ok=True)
+            output_label_path = os.path.join(output_label_dir, f"{border}_{index}.json")
 
-                f_gt.write('{}\n'.format(
-                    json.dumps(
-                        label_info, ensure_ascii=False)))
+            with open(output_label_path, "w") as f:
+                json.dump(label_info, f, ensure_ascii=False, indent=4)
 
         self.close()
 
@@ -139,13 +143,14 @@ class GenerateTable:
                           self.max_txt_len, self.max_span_row_count,
                           self.max_span_col_count, self.max_span_value,
                           self.color_prob, self.cell_max_width,
-                          self.cell_max_height)
+                          self.cell_max_height, border_type=self.border_type)
             # get table of rows and cols based on unlv distribution and get features of this table
             # (same row, col and cell matrices, total unique ids, html conversion of table and its category)
             id_count, html_content, structure, border = table.create()
 
             # convert this html code to image using selenium webdriver. Get equivalent bounding boxes
             # for each word in the table. This will generate ground truth for our problem
+            
             im, contens = self.html_to_img(html_content, id_count)
             return im, html_content, structure, contens, border
         except KeyboardInterrupt:
@@ -194,11 +199,13 @@ class GenerateTable:
         ymin = bbox[:, :, 1].min()
         xmax = bbox[:, :, 0].max()
         ymax = bbox[:, :, 1].max()
-
+        
+        # Random crop padding
         # xmin = max(0, xmin - random.randint(0, 10))
         # ymin = max(0, ymin - random.randint(0, 10))
         # xmax = min(w, xmax + random.randint(2, 10))
         # ymax = min(h, ymax + random.randint(2, 10))
+        
         # Crop fit bounding box:
         if self.cell_box_type == 'cell':
             xmin = max(0, xmin - 5)
@@ -234,7 +241,7 @@ class GenerateTable:
             # e = driver.find_element_by_id(str(id))
             e = WebDriverWait(
                 self.driver,
-                3).until(EC.presence_of_element_located((By.ID, str(id))))
+                10).until(EC.presence_of_element_located((By.ID, str(id))))
             txt = e.text.strip()
             lentext = len(txt)
             loc = e.location
@@ -245,8 +252,7 @@ class GenerateTable:
             ymax = int(size_['height'] + ymin)
 
             contens.append([
-                lentext, txt, [[xmin, ymin], [xmax, ymin], [xmax, ymax],
-                               [xmin, ymax]]
+                lentext, txt, [[xmin, ymin], [xmax, ymin], [xmax, ymax], [xmin, ymax]]
             ])
 
         png = self.driver.get_screenshot_as_png()

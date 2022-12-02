@@ -1,15 +1,28 @@
 import random
 import numpy as np
+import math
+from typing import Optional, Tuple, List
+from .utils_html import gray_color_name, blue_color_name
 
 
-def load_courp(p, join_c=''):
+def color_to_hex_html(color):
+    r, g, b = color
+    r_hex = hex(r).replace("0x", "")
+    r_hex = f"0{r_hex}" if len(r_hex)==1 else r_hex
+    g_hex = hex(g).replace("0x", "")
+    g_hex = f"0{g_hex}" if len(g_hex)==1 else g_hex
+    b_hex = hex(b).replace("0x", "")
+    b_hex = f"0{b_hex}" if len(b_hex)==1 else b_hex
+    return f"#{r_hex}{g_hex}{b_hex}"
+
+
+def load_courp(p, join_c=' '):
     courp = []
     with open(p, mode='r', encoding='utf-8') as f:
         for line in f.readlines():
             line = line.strip("\n").strip("\r\n")
             courp.append(line)
     return join_c.join(courp)
-
 
 class Table:
     def __init__(self,
@@ -25,7 +38,8 @@ class Table:
                  max_span_value=20,
                  color_prob=0,
                  cell_max_width=0,
-                 cell_max_height=0):
+                 cell_max_height=0,
+                 border_type='full_line'):
         assert cell_box_type in [
             'cell', 'text'
         ], "cell_box_type must in ['cell', 'text'],cell: use cell location as cell box; text: use location of text in cell as cell box"
@@ -41,137 +55,17 @@ class Table:
         self.max_span_col_count = max_span_col_count
         self.max_span_value = max_span_value
 
-        self.dict = ''
-        self.ch = load_courp(ch_dict_path, '')
-        self.en = load_courp(en_dict_path, '')  # "abcdefghijklmnopqrstuvwxyz"
+        self.ch = load_courp(ch_dict_path, ' ')
+        self.en = load_courp(en_dict_path, ' ')
 
-        self.pre_boder_style = {
-            1: {
-                'name': 'border',
-                'style': {
-                    'table': 'border:1px solid black;',
-                    'td': 'border:1px solid black;',
-                    'th': 'border:1px solid black;'
-                }
-            },  # 绘制全部边框
-            2: {
-                'name': 'border_top',
-                'style': {
-                    'table': 'border-top:1px solid black;',
-                    'td': 'border-top:1px solid black;',
-                    'th': 'border-top:1px solid black;'
-                }
-            },  # 绘制上横线
-            3: {
-                'name': 'border_bottom',
-                'style': {
-                    'table': 'border-bottom:1px solid black;',
-                    'td': 'border-bottom:1px solid black;',
-                    'th': 'border-bottom:1px solid black;'
-                }
-            },  # 绘制下横线
-            4: {
-                'name': 'head_border_bottom',
-                'style': {
-                    'th': 'border-bottom: 1px solid black;'
-                }
-            },  # 绘制 head 下横线
-            5: {
-                'name': 'no_border',
-                'style': ''
-            },  # 无边框
-            6: {
-                'name': 'border_left',
-                'style': {
-                    'table': 'border-left:1px solid black;',
-                    'td': 'border-left:1px solid black;',
-                    'th': 'border-left:1px solid black;'
-                }
-            },  # 绘制左竖线
-            7: {
-                'name': 'border_right',
-                'style': {
-                    'table': 'border-right:1px solid black;',
-                    'td': 'border-right:1px solid black;',
-                    'th': 'border-right:1px solid black;'
-                }
-            },  # 绘制右竖线
-            8: {
-                'name': 'border_dotted',
-                'style': {
-                    'td': 'border-style: dotted;',
-                    'th': 'border-style: dotted;'
-                }
-            },
-            9: {
-                'name': 'border_dashed',
-                'style': {
-                    'td': 'border-style: dashed;',
-                    'th': 'border-style: dashed;'
-                }
-            },
-            10: {
-                'name': 'border_fat',
-                'style': {
-                    'table': f'border:{random.randint(2,5)}px solid black;',
-                    'td': f'border:{random.randint(2,5)}px solid black;',
-                    'th': f'border:{random.randint(2,5)}px solid black;'
-                }
-            },
-            11: {
-                'name': 'border_ridge',
-                'style': {
-                    # 'table': f'border:{random.randint(2,5)}px solid black;',
-                    'td': f'border: ridge;',
-                    'th': f'border: ridge;'
-                }
-            },
-            12: {
-                'name': 'border_groove',
-                'style': {
-                    # 'table': f'border:{random.randint(2,5)}px solid black;',
-                    'td': f'border: groove;',
-                    'th': f'border: groove;'
-                }
-            },
-            13: {
-                'name': 'border_inset',
-                'style': {
-                    # 'table': f'border:{random.randint(2,5)}px solid black;',
-                    'td': f'border: inset;',
-                    'th': f'border: inset;'
-                }
-            },
-            14: {
-                'name': 'border_outset',
-                'style': {
-                    # 'table': f'border:{random.randint(2,5)}px solid black;',
-                    'td': f'border: outset;',
-                    'th': f'border: outset;'
-                }
-            },
-            15: {
-                'name': 'border_double',
-                'style': {
-                    # 'table': f'border:{random.randint(2,5)}px solid black;',
-                    'td': f'border: double;',
-                    'th': f'border: double;'
-                }
-            },
-        }
-
-        # 随机选择一种
-        # self.border_type = random.choice(list(self.pre_boder_style.keys()))
-        self.border_type = random.choice([1, 9, 10, 11, 12, 13, 14])
-
+        self.border_type = border_type
         self.spanflag = False
-        '''cell_types matrix have two possible values:
+        '''cell_types matrix have five possible values:
             c: ch
             e: en
             n: number
             t: ''
             m: money
-
         '''
         self.cell_types = np.chararray(shape=(self.no_of_rows,
                                               self.no_of_cols))
@@ -186,12 +80,9 @@ class Table:
         '''missing_cells will contain a list of (row,column) pairs where each pair would show a cell where no text should be written'''
         self.missing_cells = []
 
-        # header_count will keep track of how many top rows and how many left columns are being considered as headers
-        self.header_count = {'r': 2, 'c': 0}
 
     def get_log_value(self):
         ''' returns log base 2 (x)'''
-        import math
         return int(math.log(self.no_of_rows * self.no_of_cols, 2))
 
     def define_col_types(self):
@@ -200,13 +91,12 @@ class Table:
         1. 'n': Numbers
         2. 'w': word
         3. 'r': other types (containing special characters)
-
         '''
 
-        prob_words = 0.3
-        prob_numbers = 0.45
-        prob_ens = 0.45
-        prob_money = 0.1
+        prob_words = 0.3 # Chinese
+        prob_numbers = 0.4
+        prob_ens = 0.4
+        prob_money = 0.2
         for i, type in enumerate(
                 random.choices(
                     ['n', 'm', 'e'],
@@ -215,14 +105,27 @@ class Table:
             self.cell_types[:, i] = type
         '''The headers should be of type word'''
         self.cell_types[0:2, :] = 'e'
+        
+        # Header bold text
+        ratio_header = random.random()
+        if ratio_header < 0.05:
+            num_row_header = self.no_of_rows
+        elif ratio_header < 0.2:
+            num_row_header = 0
+        else:
+            num_row_header = random.randint(1, 2)
+
         '''All cells should have simple text but the headers'''
-        self.headers[:] = 's'
-        self.headers[0:2, :] = 'h'
+        self.headers[:] = 's' # simple text
+        self.headers[0:num_row_header, :] = 'h' # header
+
+        # header_count will keep track of how many top rows and how many left columns are being considered as headers
+        self.header_count = {'r': num_row_header, 'c': 0}
 
     def generate_random_text(self, type):
         '''cell_types matrix have two possible values:
-            c: ch
-            e: en
+            c: chinese
+            e: english
             n: number
             t: ''
             m: money
@@ -235,7 +138,7 @@ class Table:
             elif random.random() < 0.7:
                 out = '{:.0f}'.format(random.random() * max_num)
             else:
-                # 随机保留小数点后2位
+                # Randomly retain 2 decimal places
                 out = str(random.random() *
                           max_num)[:len(str(max_num)) + random.randint(0, 3)]
             if type == 'm':
@@ -243,7 +146,7 @@ class Table:
         elif (type == 'e'):
             txt_len = random.randint(self.min_txt_len, self.max_txt_len)
             out = self.generate_text(txt_len, self.en)
-            # 50% 的概率第一个字母大写
+            # 50% chance to capitalize the first letter
             if random.random() < 0.5:
                 out[0] = out[0].upper()
         elif type == 't':
@@ -338,42 +241,198 @@ class Table:
         for arr in missing:
             self.missing_cells.append((int(arr[0]), int(arr[1])))
 
+    def create_border_style(self):
+        if self.border_type =='full_line':
+            tab_thick = random.choices([1, 2, 3, 4], weights=[0.25, 0.35, 0.3, 0.1], k=1)[0]
+            th_thick = random.choices([1, 2, 3, 4], weights=[0.3, 0.35, 0.3, 0.05], k=1)[0]
+            td_thick = min(th_thick, random.choices([1, 2, 3, 4], weights=[0.3, 0.35, 0.3, 0.05], k=1)[0])
+            
+            r_color = random.random()
+            if r_color < 0.0:
+                # Generate 3D border, no color
+                color = ''
+                type_lines = ['groove', 'ridge', 'inset', 'outset']
+                type_line = random.choice(type_lines)
+            else: # Generate normal border
+                # Selenium WebElement raise timeout when using color with hex
+                # r_c = random.randint(0, 50)
+                # g_c = max(0, r_c + random.randint(-8, 7))
+                # b_c = max(0, r_c + random.randint(-8, 7))
+                # color = color_to_hex_html((r_c, g_c, b_c))
+                # Using color name instead
+                color = random.choice(gray_color_name)
+                type_lines = ['dashed', 'dotted', 'double', 'solid']
+                ratio = [0.15, 0.15, 0.15, 0.55]
+                type_line = random.choices(type_lines, weights=ratio, k=1)[0]
+            
+            style = {
+                'name': 'full_line_border',
+                'style': {
+                    'table': f'border:{tab_thick}px {type_line}; border-color: {color};',
+                    'td': f'border:{td_thick}px {type_line}; border-color: {color};',
+                    'th': f'border:{th_thick}px {type_line}; border-color: {color};'
+                },
+            }
+        elif self.border_type == 'partial_line':
+            tab_thick = 1
+            td_thick = 1
+            th_thick = 1
+            partial_line_type = {
+                1: {
+                    'name': 'border_top',
+                    'style': {
+                        'table': f'border-top: {tab_thick}px solid black;',
+                        'td': f'border-top: {td_thick}px solid black;',
+                        'th': f'border-top: {th_thick}px solid black;'
+                    }
+                },
+                3: {
+                    'name': 'border_bottom',
+                    'style': {
+                        'table': f'border-bottom: {tab_thick}px solid black;',
+                        'td': f'border-bottom: {td_thick}px solid black;',
+                        'th': f'border-bottom: {th_thick}px solid black;'
+                    }
+                },
+                4: {
+                    'name': 'head_border_bottom',
+                    'style': {
+                        'th': f'border-bottom: {th_thick}px solid black;'
+                    }
+                },
+                6: {
+                    'name': 'border_left',
+                    'style': {
+                        'table': f'border-left: {tab_thick}px solid black;',
+                        'td': f'border-left: {td_thick}px solid black;',
+                        'th': f'border-left: {th_thick}px solid black;'
+                    }
+                },
+                7: {
+                    'name': 'border_right',
+                    'style': {
+                        'table': f'border-right: {tab_thick}px solid black;',
+                        'td': f'border-right: {td_thick}px solid black;',
+                        'th': f'border-right: {th_thick}px solid black;'
+                    }
+                }
+            }
+        else: # No line
+            style = {
+                    'name': 'no_border',
+                    'style': ''
+                }
+        return style
+
+    def create_table_data_style(self, border_style):
+        td_style = "td{"
+        # Vertical alignment
+        vertical_align = random.choices(['top', 'bottom', 'center'], weights=[0.3, 0.2, 0.5], k=1)[0]
+        td_style += f"vertical-align: {vertical_align};"
+        # Set padding table data
+        if random.random() < 0.8:
+            pad_d_top = random.randint(1, 8)
+            pad_d_bot = random.randint(1, 8)
+            pad_d_left = random.randint(1, 15)
+            pad_d_right = random.randint(1, 15)
+        else:
+            pad_d_top = pad_d_bot = pad_d_left = pad_d_right = 0
+        td_style += f"padding-top: {pad_d_top}px;"
+        td_style += f"padding-bottom: {pad_d_bot}px;"
+        td_style += f"padding-left: {pad_d_left}px;"
+        td_style += f"padding-right: {pad_d_right}px;"
+        # Set word break
+        # Text wrapping - break the line
+        td_style += "word-break: break-word;"
+        # Set limit size
+        # Only need to set the height of the table header; don't need to set the height of the table data.
+        # if self.cell_max_height != 0:
+        #     td_style += f"height: {random.randint(self.cell_max_height // 2, self.cell_max_height)}px;"
+        if self.cell_max_width != 0:
+            td_style += f"width: {random.randint(self.cell_max_width // 4, self.cell_max_width)}px;"
+        # Set border style
+        if 'td' in border_style:
+            td_style += border_style['td']
+        
+        td_style += "}"
+        return td_style
+
+    def create_table_header_style(self, border_style):
+        th_style = "th{"
+        # Vertical alignment
+        vertical_align = random.choices(['top', 'bottom', 'center'], weights=[0.3, 0.2, 0.5], k=1)[0]
+        th_style += f"vertical-align: {vertical_align};"
+        # Set padding table data
+        if random.random() < 0.8:
+            pad_h_top = random.randint(1, 8)
+            pad_h_bot = random.randint(1, 8)
+            pad_h_left = random.randint(1, 15)
+            pad_h_right = random.randint(1, 15)
+        else:
+            pad_h_top = pad_h_bot = pad_h_left = pad_h_right = 0
+
+        th_style += f"padding-top: {pad_h_top}px;"
+        th_style += f"padding-bottom: {pad_h_bot}px;"
+        th_style += f"padding-right: {pad_h_right}px;"
+        th_style += f"padding-left: {pad_h_left}px;"
+        # Set word break
+        # Text wrapping - break the line
+        th_style += "word-break: break-word;"
+        # Set limit size
+        # Only need to set the height of the table header; don't need to set the height of the table data.
+        if self.cell_max_height != 0:
+            th_style += f"height: {random.randint(self.cell_max_height // 4, self.cell_max_height)}px;"
+        if self.cell_max_width != 0:
+            th_style += f"width: {random.randint(self.cell_max_width // 4, self.cell_max_width)}px;"
+        # Set border style
+        if 'th' in border_style:
+            th_style += border_style['th']
+        
+        th_style += "}"
+        return th_style
+
     def create_style(self):
         '''This function will dynamically create stylesheet. This stylesheet essentially creates our specific
         border types in tables'''
-        boder_style = self.pre_boder_style[self.border_type]['style']
-        style = '<head><meta charset="UTF-8"><style>'
-        style += "html{background-color: white;}table{"
-
-        # 表格中文本左右对齐方式
+        # Create html style
+        style = '<head><meta charset="UTF-8">'
+        # Set font text, font size
+        font_size = random.randint(1,3)
+        list_fonts = ['Helvetica', 'Arial', 'Arial Black', 'Verdana', 'Tahoma', 
+            'Trebuchet MS', 'Impact', 'Gill Sans', 'Times New Roman', 'Georgia',
+            'Palatino', 'Baskerville', 'Andalé Mono', 'Courier', 'Lucida', 'Monaco',
+            'Bradley Hand', 'Brush Script MT', 'Luminari', 'Comic Sans MS']
+        font_text = random.choice(list_fonts)
+        style += f'<font size="{font_size}" face="{font_text}" >'
+        style += '<style>' 
+        style += "html{background-color: white;}"
+        # Set style table
+        style += "table{"
+        # Set the text's horizontal alignment
         style += "text-align:{};".format(
-            random.choices(
-                ['left', 'right', 'center'], weights=[0.25, 0.25, 0.5])[0])
-        style += "border-collapse:collapse;"
-        if 'table' in boder_style:
-            style += boder_style['table']
-        style += "}td{"
-
-        # 文本上下居中
-        if random.random() < 0.5:
-            style += "align: center;valign: middle;"
-        # 大单元格
-        if self.cell_max_height != 0:
-            style += "height: {}px;".format(
-                random.randint(self.cell_max_height // 2,
-                               self.cell_max_height))
-        if self.cell_max_width != 0:
-            style += f"width: {random.randint(self.cell_max_width // 2, self.cell_max_width)}px;"
-
-        # 文本换行
-        style += "word-break:break-all;"
-        if 'td' in boder_style:
-            style += boder_style['td']
-
-        style += "}th{padding:6px;padding-left: 15px;padding-right: 15px;"
-        if 'th' in boder_style:
-            style += boder_style['th']
-        style += '}'
+            random.choices(['left', 'right', 'center'], weights=[0.3, 0.2, 0.5], k=1)[0])
+        # Using style border-collapse: collapse
+        # Check visualization: https://www.w3schools.com/cssref/tryit.php?filename=trycss_border-collapse
+        style += "border-collapse: collapse;"
+        
+        # # Set table style
+        border_type = self.create_border_style()
+        border_style = border_type['style']
+        if 'table' in border_style:
+            style += border_style['table']
+        style += "}"
+        td_style = self.create_table_data_style(border_style)
+        style += td_style
+        th_style =self.create_table_header_style(border_style)
+        style += th_style
+        
+        # text effect
+        self.underline = "underline"
+        self.italic = "italicize"
+        self.bold = "bolded"
+        style += ".{} {{text-decoration: underline;}}".format(self.underline)
+        style += ".{} {{font-style: italic;}}".format(self.italic)
+        style += ".{} {{font-weight: bold;}}".format(self.bold)
 
         style += "</style></head>"
         return style
@@ -385,7 +444,7 @@ class Table:
         idcounter = 0
         structure = []
         temparr = ['td', 'th']
-        html = """<html>"""
+        html = "<!DOCTYPE html><html>"
         html += self.create_style()
         html += '<body><table>'
         # html += '<table style="width: 100%; table-layout:fixed;">'
@@ -396,8 +455,7 @@ class Table:
                 text_type = self.cell_types[r, c].decode('utf-8')
                 row_span_value = int(self.row_spans_matrix[r, c])
                 col_span_value = int(self.col_spans_matrix[r, c])
-                htmlcol = temparr[['s', 'h'].index(self.headers[r][c].decode(
-                    'utf-8'))]
+                htmlcol = temparr[['s', 'h'].index(self.headers[r][c].decode('utf-8'))]
                 if self.cell_box_type == 'cell':
                     htmlcol += f' id={idcounter}'
                 htmlcol_style = htmlcol
@@ -405,11 +463,13 @@ class Table:
                 if ((col_span_value != 0) or (r, c) not in self.missing_cells) and random.random() < self.color_prob:
                     color = (random.randint(200, 255), random.randint(200, 255), random.randint(200, 255))
                     htmlcol_style += f' style="background-color: rgba({color[0]}, {color[1]}, {color[2]},1);"'
-
+                
+                # # Random text effect
+                text_effect = random.choice(["", self.italic, self.bold, self.underline])
+                htmlcol_style += f" class={text_effect}"
 
                 if (row_span_value == -1):
                     continue
-
                 elif (row_span_value > 0):
                     html += (f'<{htmlcol_style}' + ' rowspan=\"' + str(row_span_value)) + '">'
 
@@ -430,11 +490,11 @@ class Table:
                     else:
                         structure.append('<td>')
                 if c == 0:
-                    # 第一行设置为中英文
-                    text_type = random.choice(['e'])
+                    # First line must be set to English or word, not a number
+                    text_type = 'e'
                 txt = self.generate_random_text(text_type)
                 if self.cell_box_type == 'text':
-                    txt = f'<span id={str(idcounter)}>{txt} </span>'
+                    txt = f'<span id={idcounter}>{txt} </span>'
                 idcounter += 1
                 html += f'{txt}</{htmlcol}>'
                 structure.append('</td>')
@@ -449,16 +509,16 @@ class Table:
         self.define_col_types()  # define the data types for each column
         self.generate_missing_cells()  # generate missing cells
 
-        if self.border_type < 60:  # 绘制横线的情况下进行随机span
-            # first row span
-            if self.max_span_col_count > 0:
-                self.make_first_row_spans()
-            # first col span
-            if random.random() < 1 and self.max_span_row_count > 0:
-                self.make_first_col_spans()
+        # Random span when drawing horizontal lines
 
-        html, structure, idcounter = self.create_html(
-        )  # create equivalent html
+        # first row span
+        if self.max_span_col_count > 0 and random.random() < 0.5:
+            self.make_first_row_spans()
+        # # first col span
+        if self.max_span_row_count > 0 and random.random() < 0.5:
+            self.make_first_col_spans()
 
-        return idcounter, html, structure, self.pre_boder_style[
-            self.border_type]['name']
+        # create equivalent html
+        html, structure, idcounter = self.create_html()
+
+        return idcounter, html, structure, self.border_type

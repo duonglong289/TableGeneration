@@ -15,7 +15,9 @@ def parse_args():
     parser.add_argument('--en_dict_path', type=str, default='dict/en_corpus.txt')
 
     # table settings
-
+    parser.add_argument('--border_type', type=str, default='full_line', 
+                        choices=['full_line', 'partial_line', 'no_line'],
+                        help='cell: use cell location as cell box; text: use location of text in cell as cell box')
     # cell box type
     parser.add_argument('--cell_box_type', type=str, default='cell',
                         help='cell: use cell location as cell box; text: use location of text in cell as cell box')
@@ -70,13 +72,15 @@ def gen(index):
                         cell_max_height=args.cell_max_height,
                         browser=args.browser,
                         browser_width=args.browser_width,
-                        browser_height=args.browser_height)
+                        browser_height=args.browser_height,
+                        border_type=args.border_type)
 
         t.gen_table_img_single(index)
         t.close()
     except KeyboardInterrupt:
         t.close()
-
+    except Exception:
+        t.close()
 
 
 if __name__ == '__main__':
@@ -101,7 +105,8 @@ if __name__ == '__main__':
                           cell_max_height=args.cell_max_height,
                           browser=args.browser,
                           browser_width=args.browser_width,
-                          browser_height=args.browser_height)
+                          browser_height=args.browser_height,
+                          border_type=args.border_type)
 
         t.gen_table_img(args.num)
         t.close()
